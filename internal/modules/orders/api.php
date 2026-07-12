@@ -66,7 +66,7 @@ class OrdersAPI {
         $this->handler->sendResponse(true, $order);
     }
     
-    public function create() {
+public function create() {
         $data = json_decode(file_get_contents('php://input'), true) ?: $_POST;
         
         $customer_id = $data['customer_id'] ?? null;
@@ -78,6 +78,10 @@ class OrdersAPI {
         $description = $data['description'] ?? null;
         $pickup_date = $data['pickup_date'] ?? null;
         
+        // NEW: Grab payment details from payload
+        $payment_method = $data['payment_method'] ?? 'Online'; 
+        $payment_status = ($payment_method === 'Card') ? 'Completed' : 'Pending';
+
         if ($order_type === 'Custom') {
             $items = [];
             $total_amount = 0;
@@ -88,10 +92,12 @@ class OrdersAPI {
         try {
             $this->pdo->beginTransaction();
             
+            // 1. Insert order record
             $stmt = $this->pdo->prepare("INSERT INTO orders (customer_id, customer_name, total_amount, order_type, status) VALUES (?, ?, ?, ?, 'Pending')");
             $stmt->execute([$customer_id, $customer_name, $total_amount, $order_type]);
             $order_id = $this->pdo->lastInsertId();
             
+            // 2. Handle specific type processing routes
             if ($order_type === 'Custom') {
                 $stmt = $this->pdo->prepare("INSERT INTO custom_cake_orders (order_id, design_details, description, pickup_date) VALUES (?, ?, ?, ?)");
                 $stmt->execute([$order_id, $design_details, $description, $pickup_date]);
@@ -105,15 +111,19 @@ class OrdersAPI {
                 }
             }
             
+            // 3. NEW: Record Payment Entry into payments table mapping to schema requirements
+            $stmt = $this->pdo->prepare("INSERT INTO payments (order_id, method, amount, status) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$order_id, $payment_method, $total_amount, $payment_status]);
+            
             $this->pdo->commit();
-            $this->handler->sendResponse(true, ['order_id' => $order_id], 'Order created successfully');
+            $this->handler->sendResponse(true, ['order_id' => $order_id], 'Order and payment recorded successfully');
             
         } catch (Exception $e) {
             $this->pdo->rollBack();
             $this->handler->sendResponse(false, null, 'Failed to create order: ' . $e->getMessage());
         }
     }
-    
+        
     public function updateStatus() {
         $data = json_decode(file_get_contents('php://input'), true) ?: $_POST;
         $id = $data['order_id'] ?? $_GET['id'] ?? 0;

@@ -25,6 +25,10 @@ function handleLogout() {
     document.getElementById('loginPage').style.display = 'flex';
     document.getElementById('loginForm').reset();
     document.getElementById('loginError').style.display = 'none';
+    
+    // Reset to default Customer Login tab view on logout
+    const tabCustomer = document.getElementById('tabCustomer');
+    if (tabCustomer) tabCustomer.click();
 }
 
 async function loadAppData() {
@@ -193,3 +197,177 @@ document.getElementById('logoutFromProfile').addEventListener('click', function(
     document.getElementById('profileMenu').classList.remove('active');
     handleLogout();
 });
+
+
+// ============================================================
+//  NEW: LOGIN CARD TAB SWITCHING & VISIBILITY CONTROLS
+// ============================================================
+const tabCustomer = document.getElementById('tabCustomer');
+const tabStaff = document.getElementById('tabStaff');
+
+const viewCustomerLogin = document.getElementById('viewCustomerLogin');
+const viewCustomerRegister = document.getElementById('viewCustomerRegister');
+const viewStaffLogin = document.getElementById('viewStaffLogin');
+
+const linkRegister = document.getElementById('linkRegister');
+const linkBackToLogin = document.getElementById('linkBackToLogin');
+
+// Helper function to clear alert blocks and form inputs upon tab adjustments
+function resetFormViews() {
+    ['customerLoginForm', 'customerRegisterForm', 'loginForm'].forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form) form.reset();
+    });
+    ['customerLoginError', 'regError', 'loginError'].forEach(errId => {
+        const errEl = document.getElementById(errId);
+        if (errEl) errEl.style.display = 'none';
+    });
+}
+
+if (tabCustomer && tabStaff) {
+    // Handle Switch to Customer Login Track
+    tabCustomer.addEventListener('click', function() {
+        resetFormViews();
+        
+        // Apply Active highlighting to Customer tab link
+        tabCustomer.style.borderBottom = '2px solid var(--primary)';
+        tabCustomer.style.color = 'var(--primary)';
+        tabStaff.style.borderBottom = 'none';
+        tabStaff.style.color = 'var(--text-gray)';
+
+        // Toggle Panel Containers
+        viewCustomerLogin.style.display = 'block';
+        viewCustomerRegister.style.display = 'none';
+        viewStaffLogin.style.display = 'none';
+    });
+
+    // Handle Switch to Staff Login Track
+    tabStaff.addEventListener('click', function() {
+        resetFormViews();
+        
+        // Apply Active highlighting to Staff tab link
+        tabStaff.style.borderBottom = '2px solid var(--primary)';
+        tabStaff.style.color = 'var(--primary)';
+        tabCustomer.style.borderBottom = 'none';
+        tabCustomer.style.color = 'var(--text-gray)';
+
+        // Toggle Panel Containers
+        viewStaffLogin.style.display = 'block';
+        viewCustomerLogin.style.display = 'none';
+        viewCustomerRegister.style.display = 'none';
+    });
+}
+
+// Customer internal link: Toggle from Sign In to Create Account
+if (linkRegister) {
+    linkRegister.addEventListener('click', function(e) {
+        e.preventDefault();
+        resetFormViews();
+        viewCustomerLogin.style.display = 'none';
+        viewCustomerRegister.style.display = 'block';
+    });
+}
+
+// Customer internal link: Toggle from Create Account back to Sign In
+if (linkBackToLogin) {
+    linkBackToLogin.addEventListener('click', function(e) {
+        e.preventDefault();
+        resetFormViews();
+        viewCustomerRegister.style.display = 'none';
+        viewCustomerLogin.style.display = 'block';
+    });
+}
+
+
+// ============================================================
+//  CUSTOMER WORKSPACE AUTHENTICATION INTEGRATION
+// ============================================================
+const customerLoginForm = document.getElementById('customerLoginForm');
+
+if (customerLoginForm) {
+    customerLoginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('customerLoginEmail').value.trim();
+        const password = document.getElementById('customerLoginPassword').value.trim();
+        const errorEl = document.getElementById('customerLoginError');
+        
+        try {
+            const response = await CustomerAPI.login(email, password);
+            if (!response.success) {
+                errorEl.style.display = 'block';
+                errorEl.textContent = response.message || 'Invalid email or password.';
+                return;
+            }
+            errorEl.style.display = 'none';
+            
+            // Assign the active session state
+            currentUser = response.data;
+            currentUser.displayRole = 'Valued Customer';
+            
+            // Save locally for session persistence loop
+            localStorage.setItem('peoplesBakersUser', JSON.stringify(currentUser));
+            
+            // Swap display screens and mount workspace controls
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('app').style.display = 'flex';
+            
+            await loadAppData();
+            currentTab = 'online-store'; // Set default view route
+            renderApp();
+            
+        } catch (error) {
+            errorEl.style.display = 'block';
+            errorEl.textContent = 'Network error: ' + error.message;
+        }
+    });
+}
+
+
+// ============================================================
+//  CUSTOMER ACCOUNT CREATION HANDLING
+// ============================================================
+const customerRegisterForm = document.getElementById('customerRegisterForm');
+
+if (customerRegisterForm) {
+    customerRegisterForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Grab values from inputs securely
+        const name = document.getElementById('regName').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const address = document.getElementById('regAddress').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const errorEl = document.getElementById('regError');
+        
+        try {
+            // Send registration payload through api_client bridge
+            const response = await CustomerAPI.register({ 
+                name, 
+                email, 
+                password, 
+                phone, 
+                address 
+            });
+            
+            if (!response.success) {
+                errorEl.style.display = 'block';
+                errorEl.textContent = response.message || 'Registration failed.';
+                return;
+            }
+            
+            // Clean up elements and display completion confirmation
+            errorEl.style.display = 'none';
+            customerRegisterForm.reset();
+            showToast('Account created successfully! Please sign in.');
+            
+            // Redirect the viewport safely back to the Sign-In interface view
+            document.getElementById('viewCustomerRegister').style.display = 'none';
+            document.getElementById('viewCustomerLogin').style.display = 'block';
+            
+        } catch (error) {
+            errorEl.style.display = 'block';
+            errorEl.textContent = 'Network error: ' + error.message;
+        }
+    });
+}

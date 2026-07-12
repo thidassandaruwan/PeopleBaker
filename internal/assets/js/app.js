@@ -7,6 +7,21 @@ let isProfilePage = false;
 
 // ROLE CONFIGURATION
 const ROLE_CONFIG = {
+  customer: {
+    label: 'Customer Workspace',
+    menu: [
+      { id: 'online-store', icon: 'fa-shop', label: 'Online Store' },
+      { id: 'custom-cake-request', icon: 'fa-cake-candles', label: 'Custom Cakes' },
+      { id: 'order-history', icon: 'fa-clock-rotate-left', label: 'Order History' },
+      { id: 'customer-profile', icon: 'fa-user', label: 'My Profile' },
+    ],
+    renderMap: {
+      'online-store': renderOnlineStore,
+      'custom-cake-request': renderCustomerCakeRequest,
+      'order-history': renderCustomerOrderHistory,
+      'customer-profile': renderCustomerProfileTab,
+    }
+  },
   salesassistant: {
     label: 'Sales Assistant',
     menu: [
@@ -123,6 +138,26 @@ async function renderApp() {
   document.getElementById('userNameDisplay').textContent = currentUser.name;
   document.getElementById('userRoleDisplay').textContent = config.label;
 
+  // ============================================================
+  //  FIXED: DYNAMIC PROFILE MENU FILTERING BASED ON ROLE
+  // ============================================================
+  const profileMenu = document.getElementById('profileMenu');
+  if (profileMenu) {
+    const isCustomer = currentUser.role === 'customer';
+    
+    // Hide or show employee-specific profile buttons safely without breaking listeners
+    profileMenu.querySelectorAll('.menu-item[data-page]').forEach(item => {
+      item.style.display = isCustomer ? 'none' : 'block';
+    });
+    
+    // Hide or show the contextual menu divider element
+    const divider = profileMenu.querySelector('.menu-divider');
+    if (divider) {
+      divider.style.display = isCustomer ? 'none' : 'block';
+    }
+  }
+
+  // Render the horizontal navigation/sidebar elements
   const menu = document.getElementById('sidebarMenu');
   menu.innerHTML = config.menu.map(item => `
     <li class="${item.id === currentTab && !isProfilePage ? 'active' : ''}" data-tab="${item.id}">

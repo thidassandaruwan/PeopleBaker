@@ -179,13 +179,13 @@ INSERT INTO products (name, price, stock_qty, category_id) VALUES
 
 -- Employees
 INSERT INTO employees (name, username, password, email, role) VALUES 
-('Maria Santos', 'maria.s', 'pass123', 'maria.s@peoplesbakers.com', 'salesassistant'),
-('James Chen', 'james.c', 'pass123', 'james.c@peoplesbakers.com', 'deliveryemployee'),
-('Lisa Park', 'lisa.p', 'pass123', 'lisa.p@peoplesbakers.com', 'inventorymanager'),
-('Robert Kim', 'robert.k', 'pass123', 'robert.k@peoplesbakers.com', 'employeemanager'),
-('Alex Rivera', 'alex.r', 'pass123', 'alex.r@peoplesbakers.com', 'companymanager'),
-('Sarah Chen', 'finance', 'pass123', 'sarah.c@peoplesbakers.com', 'financemanager'),
-('David Park', 'supervisor', 'pass123', 'david.p@peoplesbakers.com', 'salessupervisor');
+('Maria Santos', 'salesassistant', '1234', 'maria.s@peoplesbakers.com', 'salesassistant'),
+('James Chen', 'deliveryemployee', '1234', 'james.c@peoplesbakers.com', 'deliveryemployee'),
+('Lisa Park', 'inventorymanager', '1234', 'lisa.p@peoplesbakers.com', 'inventorymanager'),
+('Robert Kim', 'employeemanager', '1234', 'robert.k@peoplesbakers.com', 'employeemanager'),
+('Alex Rivera', 'companymanager', '1234', 'alex.r@peoplesbakers.com', 'companymanager'),
+('Sarah Chen', 'financemanager', '1234', 'sarah.c@peoplesbakers.com', 'financemanager'),
+('David Park', 'salessupervisor', '1234', 'david.p@peoplesbakers.com', 'salessupervisor');
 
 -- Suppliers
 INSERT INTO suppliers (name, contact) VALUES 
@@ -193,3 +193,6 @@ INSERT INTO suppliers (name, contact) VALUES
 ('Dairy Distributors', '(555) 000-2222'),
 ('Grain & Mill', '(555) 000-3333'),
 ('Sweet Ingredients', '(555) 000-4444');
+
+INSERT INTO customers (name, password, email, phone, address)
+VALUES ('Jehan Doe', '1234', 'jehan@gmail.com', '+1234567890', '123 Main St, Springfield');

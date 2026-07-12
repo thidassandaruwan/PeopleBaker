@@ -75,6 +75,12 @@ const EmployeeAPI = {
     delete: (id) => API.call('employees', 'delete', 'POST', { id }),
 };
 
+const CustomerAPI = {
+    login: (email, password) => API.call('customers', 'login', 'POST', { email, password }),
+    register: (data) => API.call('customers', 'register', 'POST', data),
+    update: (data) => API.call('customers', 'update', 'POST', data)
+};
+
 const InventoryAPI = {
     list: () => API.call('inventory', 'list'),
     get: (id) => API.call('inventory', 'get', 'GET', { id }),
